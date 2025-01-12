@@ -1,11 +1,19 @@
 package com.example.currencyconverter;
 
+import android.content.Context;
+import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class ExchangeRateDatabase {
-    // Exchange rates to EURO - price for 1 Euro
     private final static ExchangeRate[] RATES = {
             new ExchangeRate("EUR", "Bruxelles", 1.0),
             new ExchangeRate("USD", "Washington", 1.0845),
@@ -56,48 +64,75 @@ public class ExchangeRateDatabase {
 
     }
 
-    /**
-     * @return List of currency names
-     */
+    public ExchangeRateDatabase(Context context) {
+        // try to load saved rates from file
+        JSONObject savedRates = readRatesFromFile(context);
+        if (savedRates != null) {
+            try {
+                Iterator<String> keys = savedRates.keys();
+                while (keys.hasNext()) {
+                    String currency = keys.next();
+                    // get nested JSONObject for each currency and extract the rate out of it
+                    JSONObject currencyData = savedRates.getJSONObject(currency);
+                    double rate = currencyData.getDouble("rate");
+
+                    if (CURRENCIES_MAP.containsKey(currency)) {
+                        CURRENCIES_MAP.get(currency).setRateForOneEuro(rate);
+                        Log.d("ExchangeRateDatabase", "Loaded saved rate for " + currency + ": " + rate);
+                    }
+                }
+            } catch (JSONException e) {
+                Log.e("ExchangeRateDatabase", "Error parsing saved rates.", e);
+            }
+        } else {
+            Log.d("ExchangeRateDatabase", "No saved rates found. Using hardcoded rates.");
+        }
+    }
+
+    private JSONObject readRatesFromFile(Context context) {
+        if (context == null) {
+            Log.e("ExchangeRateDatabase", "Context is null, cannot read from file");
+            return null;
+        }
+        try {
+            FileInputStream fis = context.openFileInput("currency_rates.json");
+            StringBuilder builder = new StringBuilder();
+            int ch;
+            while ((ch = fis.read()) != -1) {
+                builder.append((char) ch);
+            }
+            fis.close();
+            return new JSONObject(builder.toString());
+        } catch (IOException e) {
+            Log.e("ExchangeRateDatabase", "File not found or cannot be read, using default rates", e);
+            return null;
+        } catch (JSONException e) {
+            Log.e("ExchangeRateDatabase", "File contains invalid JSON, using default rates", e);
+            return null;
+        }
+    }
+
     public String[] getCurrencies() {
         return CURRENCIES_LIST;
     }
 
-    /**
-     * Gets exchange rate for currency (equivalent for one Euro)
-     *
-     * @param currency Currency name (three letters)
-     * @return Exchange rate for the currency
-     */
     public double getExchangeRate(String currency) {
         return CURRENCIES_MAP.get(currency).getRateForOneEuro();
     }
 
-    /**
-     * Sets exchange rate for currency (equivalent for one Euro)
-     *
-     * @param currency     Currency name (three letters)
-     * @param exchangeRate Exchange rate for one euro
-     */
     public void setExchangeRate(String currency, double exchangeRate) {
-        CURRENCIES_MAP.get(currency).setRateForOneEuro(exchangeRate);
+        if (CURRENCIES_MAP.containsKey(currency)) {
+            CURRENCIES_MAP.get(currency).setRateForOneEuro(exchangeRate);
+            Log.d("ExchangeRateDatabase", "Updated " + currency + " with new rate: " + exchangeRate);
+        } else {
+            Log.d("ExchangeRateDatabase", "Currency " + currency + " not found for update.");
+        }
     }
 
-    /**
-     * Returns the capital of the country issuing the currency
-     *
-     * @param currency Currency name (three letters)
-     * @return Capital of the country issuing the currency
-     */
     public String getCapital(String currency) {
         return CURRENCIES_MAP.get(currency).getCapital();
     }
 
-    /**
-     * Converts a value from a currency to another one
-     *
-     * @return converted value
-     */
     public double convert(double value, String currencyFrom, String currencyTo) {
         return value / getExchangeRate(currencyFrom) * getExchangeRate(currencyTo);
     }

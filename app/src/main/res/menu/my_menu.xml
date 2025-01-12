@@ -10,5 +10,11 @@
         android:id="@+id/share_button"
         android:title="Share button"
         android:icon="@drawable/share"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom"
+        />
+    <item
+        android:id="@+id/update_currencies"
+        android:title="Update Currencies"
+        android:icon="@drawable/refresh"
+        app:showAsAction="ifRoom" />
 </menu>

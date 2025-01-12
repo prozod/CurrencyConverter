@@ -24,8 +24,11 @@ public class CurrencyListActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Get the list of currencies from your source
-        ExchangeRateDatabase exchangeRateDatabase = new ExchangeRateDatabase();
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("Currency List");
+        }
+
+        ExchangeRateDatabase exchangeRateDatabase = new ExchangeRateDatabase(this);
         CurrencyAdapter adapter = new CurrencyAdapter(this, Arrays.asList(exchangeRateDatabase.getCurrencies()));
 
         ListView listView = findViewById(R.id.currency_list);
@@ -34,15 +37,14 @@ public class CurrencyListActivity extends AppCompatActivity {
         Intent intent = getIntent();
         String spinnerType = intent.getStringExtra("spinnerType");
 
-        // On item click, return the selected currency back to MainActivity
         listView.setOnItemClickListener((parent, view, position, id) -> {
             String selectedCurrency = adapter.getItem(position).toString();
 
             Intent resultIntent = new Intent();
             resultIntent.putExtra("selectedCurrency", selectedCurrency);
             resultIntent.putExtra("spinnerType", spinnerType);
-            setResult(RESULT_OK, resultIntent);  // Set the result to send it back to MainActivity
-            finish();  // Close the CurrencyListActivity
+            setResult(RESULT_OK, resultIntent);
+            finish();
         });
 
         listView.setOnItemLongClickListener((parent, view, position, id) -> {
@@ -56,7 +58,7 @@ public class CurrencyListActivity extends AppCompatActivity {
                 if (mapIntent.resolveActivity(getPackageManager()) != null) {
                     startActivity(mapIntent);
                 } else {
-                    Log.e("CurrencyListActivity", String.format("No application can handle GEO intent (URI: %s)", mapUri));
+                    Log.e("CurrencyListActivity", String.format("No application can handle the GEO intent (URI: %s)", mapUri));
                     Toast.makeText(CurrencyListActivity.this, "No application can run the GEO intent", Toast.LENGTH_SHORT).show();
                 }
             } else {
