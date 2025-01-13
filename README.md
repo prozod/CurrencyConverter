@@ -12,3 +12,4 @@ A simple, minimalistic currency converter written in Java & Gradle, targeting An
   were successfully updated or not via a Notification as well as a Toast notification.
 - The share button will allow you to send the result of the conversion via different applications to
   your friends.
+- APK file can be found inside the app/release directory.
